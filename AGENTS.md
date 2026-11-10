@@ -14,6 +14,7 @@ xinjing/
 ├── src/xinjing.template.html   原始碼：HTML + CSS + JS，字體位置為 __FONT_B64__
 ├── tools/build.py              建置腳本：子集化字體、內嵌字體與預錄音檔 → 寫出 index.html
 ├── tools/tts_edge.py           用 edge-tts 逐句產生預錄朗讀音檔 → audio/
+├── icons/icon-512.png         主畫面圖示（建置時產生）
 ├── audio/                      預錄音檔與 manifest.json（產生後才有）
 ├── fonts/WenKai-subset.woff2   目前使用的子集字體（建置時產生）
 ├── SPEC.md                     規格書
@@ -27,7 +28,7 @@ xinjing/
 1. **只改 `src/xinjing.template.html`**，不要直接改 `index.html`。
 2. 執行建置：
    ```bash
-   pip install fonttools brotli
+   pip install fonttools brotli pillow
    python3 tools/build.py                     # 使用 fonts/LXGWWenKaiTC-Regular.ttf
    python3 tools/build.py /path/to/字體.ttf    # 或指定路徑
    ```

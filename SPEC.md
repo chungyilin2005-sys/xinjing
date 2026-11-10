@@ -159,6 +159,12 @@
 - 自訂字體：使用者從檔案選擇器選取（不限制 `accept`，因 Android 會把未知 MIME 的字體檔反灰），以 `FontFace` 載入驗證；成功後存入 IndexedDB，下次開啟自動載入。可移除。
 - 繪製 canvas 前一律先 `document.fonts.load()`，避免字體未就緒時畫成備用字。
 
+### 3.9 圖示與加到主畫面
+
+- 圖示：磁青底（`#16203A`）泥金（`#D3B169`）霞鶩文楷「心」字，512 px PNG，由 `build.py` 以 Pillow 產生到 `icons/icon-512.png`，以 base64 內嵌為 `<link rel="icon">` 與 `apple-touch-icon`。
+- 在一般 https 網站（GitHub Pages）時，JS 動態加上 data URL 的 manifest：名稱「般若波羅蜜多心經」、短名「心經」、`display: standalone`，圖示同上（`any` 與 `maskable`）。claude.ai 與直接開檔時不加，維持零網路請求。
+- 已加到主畫面的舊捷徑不會自動換圖示，需刪除後重新加入。
+
 ## 4. 資料儲存
 
 全部存在使用者自己的瀏覽器，不上傳伺服器。換裝置或清除瀏覽器資料即遺失。

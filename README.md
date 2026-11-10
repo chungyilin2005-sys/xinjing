@@ -13,7 +13,7 @@
 只改 `src/xinjing.template.html`，再建置：
 
 ```bash
-pip install fonttools brotli
+pip install fonttools brotli pillow
 python3 tools/build.py
 ```
 

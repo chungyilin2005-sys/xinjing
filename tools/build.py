@@ -46,6 +46,30 @@ else:
 b64 = base64.b64encode(open(SUBSET, "rb").read()).decode()
 html = html.replace("__FONT_B64__", b64)
 
+# 主畫面圖示：磁青底、泥金「心」字，512 px，全幅底色（可當 maskable 圖示），字在中央安全範圍內
+ICON = os.path.join(ROOT, "icons", "icon-512.png")
+def make_icon():
+    from PIL import Image, ImageDraw, ImageFont
+    S = 512
+    img = Image.new("RGB", (S, S), "#16203A")
+    d = ImageDraw.Draw(img)
+    src = FULL if os.path.exists(FULL) else SUBSET
+    font = ImageFont.truetype(src, int(S * 0.64))
+    l, t, r, b = d.textbbox((0, 0), "心", font=font)
+    d.text(((S - (r - l)) / 2 - l, (S - (b - t)) / 2 - t), "心", font=font, fill="#D3B169")
+    os.makedirs(os.path.dirname(ICON), exist_ok=True)
+    img.save(ICON, optimize=True)
+try:
+    make_icon()
+    print(f"已產生圖示 {ICON}（{os.path.getsize(ICON)//1024} KB）")
+except Exception as e:
+    if not os.path.exists(ICON):
+        sys.exit(f"無法產生圖示（需要 pip install pillow）：{e}")
+    print("（無法重新產生圖示，沿用現有檔案：", e, "）")
+if "__ICON_B64__" not in html:
+    sys.exit("範本缺少 __ICON_B64__ 預留位置")
+html = html.replace("__ICON_B64__", base64.b64encode(open(ICON, "rb").read()).decode())
+
 # 預錄朗讀：audio/manifest.json 存在時，把各句音檔以 base64 內嵌（由 tools/tts_azure.py 產生）
 AUDIO = os.path.join(ROOT, "audio")
 MANIFEST = os.path.join(AUDIO, "manifest.json")

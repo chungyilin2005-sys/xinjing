@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>般若波羅蜜多心經</title>
+<!-- 主畫面與分頁圖示：build.py 產生的 icons/icon-512.png 以 base64 內嵌 -->
+<link rel="icon" type="image/png" sizes="512x512" href="data:image/png;base64,__ICON_B64__" id="appIcon">
+<link rel="apple-touch-icon" href="data:image/png;base64,__ICON_B64__">
+<meta name="application-name" content="心經">
+<meta name="apple-mobile-web-app-title" content="心經">
+<meta name="theme-color" content="#ECEBE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16203A" media="(prefers-color-scheme: dark)">
 <style>
 @font-face{font-family:"WenKai";src:url(data:font/woff2;base64,__FONT_B64__) format("woff2");font-display:block}
 :root{
@@ -815,6 +822,22 @@ function show(view){
 }
 document.querySelectorAll(".tab").forEach(function(t){t.onclick=function(){location.hash=t.dataset.view;show(t.dataset.view);};});
 window.addEventListener("hashchange",function(){show(location.hash.slice(1));});
+
+/* ---------- 加到主畫面 ---------- */
+// 只在一般 https 網站（如 GitHub Pages）動態加上 manifest，讓 Chrome「加到主畫面」用「心」字圖示與名稱。
+// claude.ai Artifact 與直接開檔案時略過，維持零網路請求。
+(function(){
+  try{
+    if(location.protocol!=="https:"||/claude/.test(location.hostname))return;
+    var icon=$("appIcon").href,base=location.href.split("#")[0];
+    var m={name:"般若波羅蜜多心經",short_name:"心經",start_url:base,scope:base.replace(/[^\/]*$/,""),
+      display:"standalone",background_color:"#ECEBE6",theme_color:"#16203A",
+      icons:[{src:icon,sizes:"512x512",type:"image/png",purpose:"any"},{src:icon,sizes:"512x512",type:"image/png",purpose:"maskable"}]};
+    var l=document.createElement("link");l.rel="manifest";
+    l.href="data:application/manifest+json;charset=utf-8,"+encodeURIComponent(JSON.stringify(m));
+    document.head.appendChild(l);
+  }catch(e){}
+})();
 
 /* ---------- 啟動 ---------- */
 buildSutra();applyFs();applyLayout();setUI();renderVoiceUI();
