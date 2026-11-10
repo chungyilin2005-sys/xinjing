@@ -44,5 +44,29 @@ else:
         print("（無法檢查缺字：", e, "）")
 
 b64 = base64.b64encode(open(SUBSET, "rb").read()).decode()
-open(OUT, "w", encoding="utf-8").write(html.replace("__FONT_B64__", b64))
+html = html.replace("__FONT_B64__", b64)
+
+# 預錄朗讀：audio/manifest.json 存在時，把各句音檔以 base64 內嵌（由 tools/tts_azure.py 產生）
+AUDIO = os.path.join(ROOT, "audio")
+MANIFEST = os.path.join(AUDIO, "manifest.json")
+if "/*__AUDIO__*/null" not in html:
+    sys.exit("範本缺少 /*__AUDIO__*/null 預留位置")
+if os.path.exists(MANIFEST):
+    import json
+    man = json.load(open(MANIFEST, encoding="utf-8"))
+    mimes = {".mp3": "audio/mpeg", ".ogg": "audio/ogg", ".wav": "audio/wav"}
+    items = []
+    for it in man["items"]:
+        p = os.path.join(AUDIO, it["file"])
+        if not os.path.exists(p):
+            sys.exit(f"缺少音檔 {p}，請重新執行 tools/tts_azure.py")
+        items.append({"id": it["id"], "type": mimes.get(os.path.splitext(p)[1], "audio/mpeg"),
+                      "b64": base64.b64encode(open(p, "rb").read()).decode()})
+    rec = {"voice": man.get("voice", ""), "items": items}
+    html = html.replace("/*__AUDIO__*/null", json.dumps(rec, ensure_ascii=False, separators=(",", ":")))
+    print(f"已內嵌預錄朗讀 {len(items)} 句（{man.get('voice','')}）")
+else:
+    print("沒有 audio/manifest.json，略過預錄朗讀")
+
+open(OUT, "w", encoding="utf-8").write(html)
 print(f"完成：{OUT}（{os.path.getsize(OUT)//1024} KB）")

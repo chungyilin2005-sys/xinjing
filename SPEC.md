@@ -39,7 +39,17 @@
 
 ### 3.3 朗讀
 
-兩種引擎，在設定「朗讀聲音」切換（`S.engine`：`auto`／`claude`／`device`；預設 `auto` = 有 Claude 語音就用，否則用手機語音）：
+三種引擎，在設定「朗讀聲音」切換（`S.engine`：`auto`／`rec`／`claude`／`device`；預設 `auto` 依序選：預錄 → Claude 語音 → 手機語音）：
+
+0. **預錄朗讀**（`rec`）：微軟 Edge 語音事先合成的錄音，內嵌在網頁中，有音檔時才顯示此選項（按鈕顯示「預錄・曉雨」等聲音名稱）。
+   - 產生方式：`tools/tts_edge.py`（`pip install edge-tts`，不需金鑰）讀取範本裡的 `TITLE`、`BODY`、`SAY`，以「整句」（同 Claude 語音的切法，共 11 句）合成，輸出 `audio/NN_起-迄.mp3` 與 `audio/manifest.json`。預設聲音 `zh-TW-HsiaoYuNeural`（曉雨），語速 `-10%`。
+   - edge-tts 使用 Edge「大聲朗讀」的非公開介面，非正式授權服務，可能隨時失效；已產生的音檔不受影響。
+   - 另產生整篇單一音檔 `audio/心經-曉雨.mp3`（約 97 秒），供網頁以外使用，不內嵌。
+   - `build.py` 把音檔 base64 內嵌，取代範本中的 `/*__AUDIO__*/null`；沒有 `audio/manifest.json` 時維持 `null`。
+   - 播放：解碼成 Blob 網址，以單一 `Audio` 元素逐句播放，句間停頓 420 ms（經題後 600 ms），整句標亮。
+   - 語速：錄音視為語速 0.8，`playbackRate = 語速 ÷ 0.8`（Chrome 預設保持音高）。
+   - 暫停記住句序與播放位置，繼續時從原位置接著播。
+   - 修改經文或 `SAY` 後須重新產生錄音。
 
 1. **Claude 語音**（`claude.use("tts")`）：在 claude.ai 網頁開啟時可用（Android Chrome 可，Claude App、直接開檔案不可）。聲音較自然。
    - 聲線四選一（`S.cvoice`）：柔順 `buttery`（預設）、輕盈 `airy`、清亮 `glassy`、圓潤 `rounded`。官方說明非英文可能各聲線聽起來相近，設定面板有註明。
@@ -155,7 +165,7 @@
 
 | 位置 | 鍵 | 內容 |
 |---|---|---|
-| localStorage | `xj.set` | `{fs, layout:"v"\|"h", font:"wenkai"\|"user"\|"system", pen, rate, theme:"auto"\|"light"\|"dark", engine:"auto"\|"claude"\|"device", cvoice, dvoice, pitch}`（新欄位缺少時用預設值補上，舊資料可直接讀） |
+| localStorage | `xj.set` | `{fs, layout:"v"\|"h", font:"wenkai"\|"user"\|"system", pen, rate, theme:"auto"\|"light"\|"dark", engine:"auto"\|"rec"\|"claude"\|"device", cvoice, dvoice, pitch}`（新欄位缺少時用預設值補上，舊資料可直接讀） |
 | localStorage | `xj.idx` | 目前描寫字序（0～267） |
 | localStorage | `xj.s.<字序>` | 該字筆畫陣列 |
 | IndexedDB `xinjing` / store `kv` | `userFont` | `{name, buf: ArrayBuffer}` |
@@ -167,7 +177,7 @@
 ## 5. 技術限制
 
 - 單一 HTML 檔，CSS、JS、字體全部內嵌；不載入任何外部資源（Artifact 的內容安全政策會擋）。
-- 檔案上限 16 MB；目前約 212 KB。
+- 檔案上限 16 MB；目前約 1 MB（含預錄音檔約 0.8 MB）。
 - 安全區域：`viewport-fit=cover`，`:root` 以 `env(safe-area-inset-*)` 內縮；固定定位元素自行加底部內縮。
 - 版面高度用 `height:100%`，不用 `100vh`。
 - 一般的下載連結在 Artifact 內無效，存圖片必須走 `downloads` 能力。
@@ -187,6 +197,7 @@
 - [ ] 直排時從右側（經題）開始，向左捲動閱讀。
 - [ ] 朗讀時逐句標亮；暫停、繼續、停止、變更語速均正常。
 - [ ] 「般若」聽起來是ㄅㄛ ㄖㄜˇ（Claude 語音與手機語音都要聽）。
+- [ ] 有錄音時，「預錄」可播放、逐句標亮、暫停後從原處繼續、語速變更立即生效；在 Artifact 頁面與 GitHub Pages 都能播放。
 - [ ] 設定「朗讀聲音」可切換 Claude 語音／手機語音；各聲線、手機語音清單、音高、試聽都有作用。
 - [ ] 描寫一筆後重新整理，筆畫仍在。
 - [ ] 復原、清除、上一字、下一字正常；最後一字按「完成」開啟整篇。

@@ -194,6 +194,7 @@ main{flex:1;min-height:0;position:relative}
   <div class="seg" id="engineSeg">
     <button data-engine="claude" aria-pressed="false">Claude 語音</button>
     <button data-engine="device" aria-pressed="false">手機語音</button>
+    <button data-engine="rec" aria-pressed="false" hidden>預錄</button>
   </div>
   <div class="seg" id="cvoiceSeg">
     <button data-cvoice="buttery" aria-pressed="false">柔順</button>
@@ -348,6 +349,44 @@ document.querySelectorAll("#layoutSeg button").forEach(function(b){b.onclick=fun
 // 引擎：claude = Claude 語音（tts 能力，整句一行送出，較自然）；native = 手機的 speechSynthesis（逐句送出）
 var RATES=[0.6,0.7,0.8,1,1.2];
 var cur=0,state="idle",token=0,voice=null,eng=null,claudeTts=null,claudeOff=false,dvoices=[];
+// 預錄朗讀：build.py 由 audio/ 內嵌 {voice, items:[{id:"起-迄", type, b64}]}；沒有音檔時為 null
+var REC=/*__AUDIO__*/null;
+var VOICE_NAMES={"zh-TW-HsiaoYuNeural":"曉雨","zh-TW-HsiaoChenNeural":"曉臻","zh-TW-YunJheNeural":"雲哲"};
+var recUrls=null,recRanges=null,audio=null,recIdx=0,recPos=0;
+function recReady(){return !!(REC&&REC.items&&REC.items.length);}
+function recName(){return (REC&&VOICE_NAMES[REC.voice])||"";}
+function recInit(){
+  if(recUrls)return;
+  recUrls=REC.items.map(function(it){
+    var bin=atob(it.b64),u8=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+    return URL.createObjectURL(new Blob([u8],{type:it.type||"audio/mpeg"}));
+  });
+  recRanges=REC.items.map(function(it){var p=String(it.id).split("-");return [+p[0],+p[1]];});
+  audio=new Audio();audio.preload="auto";
+}
+// 錄音以 0.8 為原速；語速設定換算成播放速度（Chrome 預設保持音高）
+function recRate(){return S.rate/0.8;}
+function recFind(i){for(var k=0;k<recRanges.length;k++)if(recRanges[k][0]<=i&&i<=recRanges[k][1])return k;return 0;}
+function recPlay(k,my,pos){
+  if(my!==token)return;
+  if(k>=recUrls.length){finish();return;}
+  recIdx=k;recPos=0;
+  var r=recRanges[k];cur=r[0];mark(r[0],r[1]);
+  audio.onended=function(){
+    if(my!==token)return;
+    recIdx=k+1;recPos=0;
+    setTimeout(function(){recPlay(k+1,my,0);},k===0?600:420);
+  };
+  audio.src=recUrls[k];
+  audio.defaultPlaybackRate=audio.playbackRate=recRate();
+  if(pos)audio.currentTime=pos;
+  var pr=audio.play();
+  if(pr&&pr.catch)pr.catch(function(e){
+    if(my!==token||(e&&e.name==="AbortError"))return;
+    finish();toast("無法播放預錄朗讀，請再按一次「朗讀」");
+  });
+}
 var hasNative=("speechSynthesis" in window)&&typeof SpeechSynthesisUtterance!=="undefined";
 function vlang(v){return (v.lang||"").replace("_","-").toLowerCase();}
 function zhRank(v){
@@ -368,10 +407,19 @@ function pickVoice(){
   renderVoiceUI();
 }
 // 使用者想要的引擎（auto：有 Claude 語音就用）
-function wantEngine(){var w=S.engine==="auto"?"claude":S.engine;return (w==="claude"&&claudeTts)?"claude":"device";}
+// auto 的順序：預錄 → Claude 語音 → 手機語音
+function wantEngine(){
+  var w=S.engine;
+  if(w==="auto")w=recReady()?"rec":"claude";
+  if(w==="rec")return recReady()?"rec":(claudeTts?"claude":"device");
+  if(w==="claude")return claudeTts?"claude":"device";
+  return "device";
+}
 // 實際可用的引擎；使用者在頁面權限關掉 Claude 語音時，不自動改用手機語音
 function engineNow(){
-  if(wantEngine()==="claude")return claudeOff?null:"claude";
+  var w=wantEngine();
+  if(w==="rec")return "rec";
+  if(w==="claude")return claudeOff?null:"claude";
   return hasNative?"native":null;
 }
 function mark(a,b){
@@ -434,6 +482,8 @@ function play(from){
     speechSynthesis.cancel();
     if(!voice&&speechSynthesis.getVoices().length)toast("這台手機找不到中文語音，請在系統設定的「文字轉語音」安裝中文（台灣）語音",5000);
     state="playing";setUI();setTimeout(function(){nativeSay(from,my);},60);
+  }else if(eng==="rec"){
+    recInit();state="playing";setUI();recPlay(recFind(from),my,0);
   }else{
     cur=from;state="playing";setUI();mark(from,sentenceEnd(from));
     claudeTts.speak(claudeLines(from),claudeOpts()).then(function(){if(my===token&&state==="playing")finish();})
@@ -442,16 +492,19 @@ function play(from){
 }
 function pause(){
   if(eng==="native"){token++;speechSynthesis.cancel();}
+  else if(eng==="rec"){token++;recPos=audio.ended?0:audio.currentTime;audio.pause();}
   else if(eng==="claude"){claudeTts.pause().catch(function(){});}
   state="paused";setUI();
 }
 function resume(){
   if(eng==="claude"&&claudeTts&&claudeTts.active()){claudeTts.resume().catch(function(){});state="playing";setUI();}
+  else if(eng==="rec"&&engineNow()==="rec"){token++;state="playing";setUI();recPlay(recIdx,token,recPos);}
   else play(cur);
 }
 function stopAll(){
   token++;
   if(eng==="native"){speechSynthesis.cancel();}
+  else if(eng==="rec"&&audio){audio.pause();}
   else if(eng==="claude"&&claudeTts){claudeTts.stop().catch(function(){});}
   finish();
 }
@@ -466,7 +519,7 @@ $("play").onclick=function(){
 $("stop").onclick=stopAll;
 $("rate").onclick=function(){
   var k=RATES.indexOf(S.rate);S.rate=RATES[(k+1)%RATES.length];saveS();setUI();
-  if(state==="playing"){if(eng==="native")play(cur);else if(eng==="claude"&&claudeTts.setRate)claudeTts.setRate(Math.max(0.7,S.rate)).catch(function(){});}
+  if(state==="playing"){if(eng==="rec")audio.defaultPlaybackRate=audio.playbackRate=recRate();else if(eng==="native")play(cur);else if(eng==="claude"&&claudeTts.setRate)claudeTts.setRate(Math.max(0.7,S.rate)).catch(function(){});}
 };
 $("sutra").addEventListener("click",function(e){
   var el=e.target.closest(".cl");if(!el)return;
@@ -481,6 +534,7 @@ function renderVoiceUI(){
   document.querySelectorAll("#engineSeg button").forEach(function(b){
     b.setAttribute("aria-pressed",String(b.dataset.engine===w));
     if(b.dataset.engine==="claude")b.disabled=!claudeTts;
+    if(b.dataset.engine==="rec"){b.hidden=!recReady();b.textContent=recName()?"預錄・"+recName():"預錄";}
   });
   document.querySelectorAll("#cvoiceSeg button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.cvoice===S.cvoice));});
   $("cvoiceSeg").hidden=(w!=="claude");
@@ -493,11 +547,12 @@ function renderVoiceUI(){
   });
   $("pitchRange").value=S.pitch;$("pitchOut").textContent=S.pitch.toFixed(2);
   var note;
-  if(w==="claude")note=claudeOff?"這個頁面的 Claude 語音朗讀已關閉（可在頁面的權限選單重新開啟），或改選手機語音。":"Claude 語音較自然，需要連上網路。念中文時，四種聲線可能聽起來相近。";
+  if(w==="rec")note="預錄朗讀"+(recName()?"是微軟 Edge 語音「"+recName()+"」":"")+"事先合成好的錄音，存在網頁裡，不需要網路。語速以播放速度調整。";
+  else if(w==="claude")note=claudeOff?"這個頁面的 Claude 語音朗讀已關閉（可在頁面的權限選單重新開啟），或改選手機語音。":"Claude 語音較自然，需要連上網路。念中文時，四種聲線可能聽起來相近。";
   else if(!hasNative)note="這個畫面沒有可用的語音。請在 Chrome 瀏覽器開啟這個網頁。";
   else if(!dvoices.length)note="這台裝置沒有中文語音。請在系統設定搜尋「文字轉語音」，安裝中文（台灣）語音。";
   else note="手機語音不需要網路。想換更自然的聲音，可在系統設定搜尋「文字轉語音」，更換 Google 語音的聲線或下載高品質語音。";
-  if(!claudeTts)note+="Claude 語音只在 claude.ai 網頁（Chrome 等瀏覽器）開啟時可用。";
+  if(!claudeTts&&w!=="rec")note+="Claude 語音只在 claude.ai 網頁（Chrome 等瀏覽器）開啟時可用。";
   $("voiceNote").textContent=note;
 }
 document.querySelectorAll("#engineSeg button").forEach(function(b){b.onclick=function(){
@@ -518,7 +573,8 @@ $("testVoice").onclick=function(){
   var e=engineNow();if(!e){noSpeech();return;}
   eng=e;
   var txt=spoken(clauses[1]+clauses[2]);
-  if(e==="native"){speechSynthesis.cancel();speechSynthesis.speak(utter(txt));}
+  if(e==="rec"){recInit();audio.onended=null;audio.src=recUrls[Math.min(1,recUrls.length-1)];audio.defaultPlaybackRate=audio.playbackRate=recRate();var pr=audio.play();if(pr&&pr.catch)pr.catch(function(){});}
+  else if(e==="native"){speechSynthesis.cancel();speechSynthesis.speak(utter(txt));}
   else claudeTts.speak([{text:txt,id:"test"}],claudeOpts()).catch(function(err){
     if(err&&err.code==="not_granted"){claudeOff=true;renderVoiceUI();}
     else if(err&&err.code==="unavailable"){claudeTts=null;renderVoiceUI();}

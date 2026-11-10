@@ -12,7 +12,9 @@
 xinjing/
 ├── index.html                  建置產物，可直接開啟或發布（勿手改）
 ├── src/xinjing.template.html   原始碼：HTML + CSS + JS，字體位置為 __FONT_B64__
-├── tools/build.py              建置腳本：子集化字體 → base64 → 寫出 index.html
+├── tools/build.py              建置腳本：子集化字體、內嵌字體與預錄音檔 → 寫出 index.html
+├── tools/tts_edge.py           用 edge-tts 逐句產生預錄朗讀音檔 → audio/
+├── audio/                      預錄音檔與 manifest.json（產生後才有）
 ├── fonts/WenKai-subset.woff2   目前使用的子集字體（建置時產生）
 ├── SPEC.md                     規格書
 └── AGENTS.md                   本檔
@@ -67,6 +69,8 @@ Android Chrome 的 `speechSynthesis` 有幾個已知問題，現行設計就是�
 - `pause()` / `resume()` 不可靠 → 所以暫停是 `cancel()` 後記住句序。
 - `cancel()` 之後舊的 `onend` 仍可能觸發 → 所以用遞增的 `token` 判斷回呼是否過期。
 - 語音清單是非同步載入 → 所以監聽 `voiceschanged` 重新挑選。
+
+預錄朗讀的音檔由 `tools/tts_edge.py`（edge-tts，不需金鑰）產生。改了經文或 `SAY` 就要重新產生錄音再建置。edge-tts 是非公開介面，若出現 403 先升級套件版本；不要用偽造標頭等方式繞過封鎖。
 
 以上只針對「手機語音」引擎。「Claude 語音」引擎（`tts` 能力）可以整句送出、用平台的 `pause()`／`resume()`；它回報 `not_granted` 時不可自動改用手機語音朗讀（會違反使用者關掉朗讀的選擇）。
 
