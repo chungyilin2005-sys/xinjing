@@ -1,52 +1,497 @@
 {
- "voice": "zh-TW-HsiaoYuNeural",
+ "voices": {
+  "j": "zh-TW-HsiaoYuNeural",
+  "n": "zh-TW-HsiaoChenNeural"
+ },
  "rate": "-10%",
  "pitch": "+0Hz",
  "source": "edge-tts",
  "items": [
   {
-   "id": "0-0",
-   "file": "00_0-0.mp3"
+   "id": "j:0",
+   "file": "j_0.mp3",
+   "text": "波惹波羅蜜多心經",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "1-4",
-   "file": "01_1-4.mp3"
+   "id": "j:1",
+   "file": "j_1.mp3",
+   "text": "觀自在菩薩，形深波惹波羅蜜多時，",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "5-11",
-   "file": "02_5-11.mp3"
+   "id": "j:2",
+   "file": "j_2.mp3",
+   "text": "照見五蘊皆空，度一切苦厄。",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "12-16",
-   "file": "03_12-16.mp3"
+   "id": "j:3",
+   "file": "j_3.mp3",
+   "text": "社利子，",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "17-26",
-   "file": "04_17-26.mp3"
+   "id": "j:4",
+   "file": "j_4.mp3",
+   "text": "色不異空，空不異色，色即是空，空即是色，受想形識，亦復如是。",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "27-28",
-   "file": "05_27-28.mp3"
+   "id": "j:5",
+   "file": "j_5.mp3",
+   "text": "社利子，是諸法空相，不生不滅，不垢不淨，不增不減。",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "29-36",
-   "file": "06_29-36.mp3"
+   "id": "j:6",
+   "file": "j_6.mp3",
+   "text": "是故空中無色，無受想形識，",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "37-39",
-   "file": "07_37-39.mp3"
+   "id": "j:7",
+   "file": "j_7.mp3",
+   "text": "無眼耳鼻舌身意，無色聲香味觸法，",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "40-46",
-   "file": "08_40-46.mp3"
+   "id": "j:8",
+   "file": "j_8.mp3",
+   "text": "無眼界，乃至無意識界，",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "47-48",
-   "file": "09_47-48.mp3"
+   "id": "j:9",
+   "file": "j_9.mp3",
+   "text": "無無明，亦無無明盡，乃至無老死，亦無老死盡。",
+   "voice": "zh-TW-HsiaoYuNeural"
   },
   {
-   "id": "49-52",
-   "file": "10_49-52.mp3"
+   "id": "j:10",
+   "file": "j_10.mp3",
+   "text": "無苦集滅道，",
+   "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "j:11",
+   "file": "j_11.mp3",
+   "text": "無智亦無得。",
+   "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "j:12",
+   "file": "j_12.mp3",
+   "text": "以無所得故，",
+   "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "j:13",
+   "file": "j_13.mp3",
+   "text": "菩提薩朵，依波惹波羅蜜多故，心無掛礙，無掛礙故，無有恐怖，遠離顛倒夢想，究竟涅槃。",
+   "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "j:14",
+   "file": "j_14.mp3",
+   "text": "三世諸佛，依波惹波羅蜜多故，得阿耨多羅三藐三菩提。",
+   "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "j:15",
+   "file": "j_15.mp3",
+   "text": "故知波惹波羅蜜多，是大神咒，是大明咒，是無上咒，是無等等咒，",
+   "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "j:16",
+   "file": "j_16.mp3",
+   "text": "能除一切苦，真實不虛。",
+   "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "j:17",
+   "file": "j_17.mp3",
+   "text": "故說波惹波羅蜜多咒，即說咒曰：",
+   "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "j:18",
+   "file": "j_18.mp3",
+   "text": "揭諦揭諦，波羅揭諦，波羅僧揭諦，菩提薩婆訶。",
+   "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "n:0:0",
+   "file": "n_0_0.mp3",
+   "text": "按施護譯本。世尊在靈鷲山中。入甚深光明。宣說正法三摩提。社利子白觀自在菩薩言。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:0:1",
+   "file": "n_0_1.mp3",
+   "text": "若有人欲修學甚深波惹法門者，當云何修學。而觀自在遂說此經。此經即世尊所說。大部波惹之精要。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:0:2",
+   "file": "n_0_2.mp3",
+   "text": "故知菩薩之說即是佛說。傳至中華凡五譯。今從玄奘所譯者，以中國盛形故也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:0:3",
+   "file": "n_0_3.mp3",
+   "text": "波惹者梵語也華言智慧。波羅蜜多者，華言到彼岸。眾生由迷慧性居生死。曰此岸。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:0:4",
+   "file": "n_0_4.mp3",
+   "text": "菩薩由修波惹悟慧性到涅槃。曰彼岸。心者波惹心也。此波惹心人人本具說此經者，",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:0:5",
+   "file": "n_0_5.mp3",
+   "text": "欲令眾生斷除妄心顯發本性故也。經者法也。常也。此經以單法為名。實相為體。觀照為宗。度苦為用。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:0:6",
+   "file": "n_0_6.mp3",
+   "text": "大剩為教相。此五者皆經中所說之旨。單法者，即波惹波羅蜜多也。實相者，即諸法空相也。觀照者，",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:0:7",
+   "file": "n_0_7.mp3",
+   "text": "即照見五蘊皆空也。度苦者，即度一切苦厄也。大剩者，即菩薩所形深波惹也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:1:0",
+   "file": "n_1_0.mp3",
+   "text": "觀自在者，能修波惹之菩薩也。波惹波羅蜜多者，菩薩所修之法也。菩薩用波惹觀慧照了自心。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:1:1",
+   "file": "n_1_1.mp3",
+   "text": "清淨圓融無礙。故稱自在。此自形也。復念世間受苦眾生。令其修習此法改惡遷善。離苦得樂無不自在。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:1:2",
+   "file": "n_1_2.mp3",
+   "text": "此化他也。菩薩者，梵語菩提薩朵。華言覺眾生。但稱菩薩者從略也。形者修形也。深波惹者，實相波惹也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:1:3",
+   "file": "n_1_3.mp3",
+   "text": "非初心淺智者所觀故云深也。時者菩薩修形波惹時也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:2:0",
+   "file": "n_2_0.mp3",
+   "text": "照者觀也。五蘊者，色受想形識也。蘊者積聚也。空者真空也。色者色身也。受者領納也。想者思想也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:2:1",
+   "file": "n_2_1.mp3",
+   "text": "形者作造也。識者分別也。識即心王。受想形是心所也。度者度脫也。一切苦厄者，世間之眾苦也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:2:2",
+   "file": "n_2_2.mp3",
+   "text": "菩薩由照五蘊空寂。離生死苦。復憫在迷眾生顛倒妄想。悖理亂常不忠不孝。十惡五逆致受眾苦。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:2:3",
+   "file": "n_2_3.mp3",
+   "text": "故說此波惹法門令其修習皆得解脫也。已上一段乃阿難結集法葬時。敘述觀自在菩薩度生之功形。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:2:4",
+   "file": "n_2_4.mp3",
+   "text": "此是別序也。下段自社利子起。始是觀自在菩薩答社利子所問也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:3:0",
+   "file": "n_3_0.mp3",
+   "text": "社利子。佛之弟子。智慧第一。因其為眾請問。故菩薩呼其名。而告之云。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:4:0",
+   "file": "n_4_0.mp3",
+   "text": "色即四大幻色。空乃波惹真空。眾生由迷真空而受幻色。譬如水之成冰也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:4:1",
+   "file": "n_4_1.mp3",
+   "text": "菩薩因修波惹觀慧照了幻色。即是真空。其猶融冰為水。然色之與空其體無殊。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:4:2",
+   "file": "n_4_2.mp3",
+   "text": "故曰色不異空空不異色。如冰不異水。水不異冰。復恐鈍根眾生不了猶存色空二見。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:4:3",
+   "file": "n_4_3.mp3",
+   "text": "故曰色即是空空即是色。如冰即是水。水即是冰。若受若想若形若識。莫不皆然。此乃一經之要。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:4:4",
+   "file": "n_4_4.mp3",
+   "text": "波惹之心也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:5:0",
+   "file": "n_5_0.mp3",
+   "text": "是諸法者，指前五蘊也。空相者，即真空實相也。菩薩復告社利子云。既了諸法當體。即是真空實相。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:5:1",
+   "file": "n_5_1.mp3",
+   "text": "實相之體本無生滅。既無生滅豈有垢淨。既無垢淨。豈有增減乎。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:6:0",
+   "file": "n_6_0.mp3",
+   "text": "此真空實相之中。既不可以生滅垢淨增減求之。故總結云。無色無受想形識。無即空也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:7:0",
+   "file": "n_7_0.mp3",
+   "text": "真空實相之中既無五蘊亦無六根六塵。此空十二入也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:8:0",
+   "file": "n_8_0.mp3",
+   "text": "既無十二入。亦無十八界。十八界者，六根六塵六識也。乃至者，舉其始末而略其中也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:8:1",
+   "file": "n_8_1.mp3",
+   "text": "如上五蘊十二入十八界。不出色心二法。為迷心重者，說為五蘊。為迷色重者，說為十二入。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:8:2",
+   "file": "n_8_2.mp3",
+   "text": "為色心俱迷者，說為十八界。已上三科修學之人。隨其根器但修一科。即能悟入。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:0",
+   "file": "n_9_0.mp3",
+   "text": "此空十二因緣也。無明者癡暗也。謂於本性無所明了。非蒙然無知。乃違理強覺之謂也。無無明等者，",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:1",
+   "file": "n_9_1.mp3",
+   "text": "菩薩以波惹智觀此無明。其性本空無生滅相。故云無無明亦無無明盡也。乃至無老死亦無老死盡者，",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:2",
+   "file": "n_9_2.mp3",
+   "text": "義與前同。但舉其始末而略其中也。生相者，如法華經云。無明緣形。乃至生緣老死是也。滅相者，如經云。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:3",
+   "file": "n_9_3.mp3",
+   "text": "無明滅則形滅。乃至生滅則老死滅是也。十二因緣亦名十二有支。一曰無明。亦名煩惱。二曰形。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:4",
+   "file": "n_9_4.mp3",
+   "text": "謂造作諸業。此二支乃過去所作之因也。三曰識。謂起妄念初託母胎也。四曰名色。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:5",
+   "file": "n_9_5.mp3",
+   "text": "從託胎後生諸根形也。五曰六入。於胎中而成六根也。六曰觸。出胎後六根對六塵也。七曰受。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:6",
+   "file": "n_9_6.mp3",
+   "text": "謂領納世間好惡等事。此五支乃現在所受之果也。八曰愛。謂貪染五欲等事也。九曰取。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:7",
+   "file": "n_9_7.mp3",
+   "text": "謂於諸境生取濁心也。十曰有作。謂有漏之因。能招未來之果。此三支乃現在所作之因也。十一曰生。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:8",
+   "file": "n_9_8.mp3",
+   "text": "謂受未來五蘊之身也。十二曰老死。謂未來之身既老而死。此二支乃來世當受之果也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:9",
+   "file": "n_9_9.mp3",
+   "text": "此十二因緣該三世因果。展轉因依如輪旋轉無有休息。一切眾生迷而不知。良可悲也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:9:10",
+   "file": "n_9_10.mp3",
+   "text": "此本緣覺之人所觀之境。大剩菩薩徹照此境皆無實性。故云無也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:10:0",
+   "file": "n_10_0.mp3",
+   "text": "無苦集滅道者，觀四諦清淨也。苦即生死苦果。集是惑業苦因。此二者世間之法也。滅即涅槃樂果。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:10:1",
+   "file": "n_10_1.mp3",
+   "text": "道即道品樂因。此二者出世間之法也。說此四諦者，欲令眾生知苦斷集慕滅修道離苦得樂也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:10:2",
+   "file": "n_10_2.mp3",
+   "text": "此本聲聞之人所觀之境。大剩菩薩照了此境當體空寂。故云無也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:11:0",
+   "file": "n_11_0.mp3",
+   "text": "智者波惹之智也。大剩菩薩以智照境。既無五蘊及四諦諸法。即是人法皆空境智俱泯。如病去藥忘。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:11:1",
+   "file": "n_11_1.mp3",
+   "text": "故云無智亦無得也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:12:0",
+   "file": "n_12_0.mp3",
+   "text": "此結前起後之言。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:13:0",
+   "file": "n_13_0.mp3",
+   "text": "菩提薩朵者，能依之人也。波惹波羅蜜多者，所依之法也。菩薩之人依此波惹法門修學。功成理顯。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:13:1",
+   "file": "n_13_1.mp3",
+   "text": "故得心無業縛。因無業縛故。無生死恐怖。即無生死恐怖。則無顛倒煩惱。此三障既空三德乃顯。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:13:2",
+   "file": "n_13_2.mp3",
+   "text": "故云究竟涅槃。涅槃者，梵語摩訶波涅槃那。華言大滅度。大即法身。滅即解脫。度即波惹。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:13:3",
+   "file": "n_13_3.mp3",
+   "text": "此之三德非別有也。即三障是。迷即三障。悟即三德。所謂生死即法身。煩惱即波惹。結業即解脫。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:13:4",
+   "file": "n_13_4.mp3",
+   "text": "然雖障即是德。自非波惹之功德不能顯。譬如磨鏡垢盡明現。斯之謂也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:14:0",
+   "file": "n_14_0.mp3",
+   "text": "三世者，過去未來現在也。阿耨多羅三藐三菩提者，華言無上正等正覺。此言非惟菩薩。如是修證。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:14:1",
+   "file": "n_14_1.mp3",
+   "text": "而一切諸佛莫不皆修波惹得成正覺也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:15:0",
+   "file": "n_15_0.mp3",
+   "text": "前是顯說波惹。後是密說波惹。然既顯說而又密說者何耶。良由眾生根器不同所入有異故也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:15:1",
+   "file": "n_15_1.mp3",
+   "text": "四種咒者，蓋言波惹功用。能破魔障名大神咒。能滅癡暗名大明咒。能顯至理名無上咒。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:15:2",
+   "file": "n_15_2.mp3",
+   "text": "極妙覺果無與等者，名無等等咒。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:16:0",
+   "file": "n_16_0.mp3",
+   "text": "此結波惹功用廣大。除苦得樂決定無疑。令諸眾生信受奉形也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:18:0",
+   "file": "n_18_0.mp3",
+   "text": "已上密說波惹。此五種不翻之一也。蓋咒是佛之密語。非下凡所知。法華疏云。咒是鬼神王之名號。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:18:1",
+   "file": "n_18_1.mp3",
+   "text": "稱其王名。則部落敬主。故能祥伏一切鬼魅。或云咒者，如軍中密號。唱號相應無所訶問。又咒者願也。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:18:2",
+   "file": "n_18_2.mp3",
+   "text": "如果裸之祝螟蛉願其類我。佛菩薩說咒。願諸眾生皆如我之得成正覺。能誦此咒者，",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "n:18:3",
+   "file": "n_18_3.mp3",
+   "text": "則所願無不成就也。",
+   "voice": "zh-TW-HsiaoChenNeural"
   }
  ]
 }

@@ -4,20 +4,29 @@
 
 ## 專案概要
 
-《般若波羅蜜多心經》讀誦與描寫網頁。單一 HTML 檔，主要在 Android 手機的 Chrome 上使用，並發布為 claude.ai Artifact。
+《般若波羅蜜多心經》讀誦與描寫網頁，附明代宗泐、如玘註解、御製心經序與逐段白話。單一 HTML 檔，主要在 Android 手機的 Chrome 上使用，並發布為 claude.ai Artifact。
 
 ## 檔案結構
 
 ```
 xinjing/
 ├── index.html                  建置產物，可直接開啟或發布（勿手改）
-├── src/xinjing.template.html   原始碼：HTML + CSS + JS，字體位置為 __FONT_B64__
-├── tools/build.py              建置腳本：子集化字體、內嵌字體與預錄音檔 → 寫出 index.html
-├── tools/tts_edge.py           用 edge-tts 逐句產生預錄朗讀音檔 → audio/
+├── src/xinjing.template.html   原始碼：HTML + CSS + JS，預留位置 __FONT_B64__、/*__DATA__*/null、/*__AUDIO__*/null
+├── tools/build.py              建置腳本：內嵌註解等資料、子集化字體、內嵌字體與預錄音檔 → 寫出 index.html
+├── tools/fetch_notes.py        下載維基文庫固定版本的註解，解析成 data/notes.json
+├── tools/textdata.py           build.py 與 tts_edge.py 共用：套用修正、切小句、產生朗讀文字
+├── tools/tts_edge.py           用 edge-tts 逐項產生預錄朗讀音檔（經文、註解；白話不預錄）→ audio/
+├── data/notes.json             註解與序（fetch_notes.py 產生，勿手改）
+├── data/raw/                   維基文庫原始碼與版本資訊
+├── data/corrections.json       使用者確認過的註解修正
+├── data/corrections.proposed.json  候選修正（待確認）
+├── data/plain.json             逐段白話（Claude 依註解意譯）
 ├── icons/icon-512.png         主畫面圖示（建置時產生）
 ├── audio/                      預錄音檔與 manifest.json（產生後才有）
 ├── fonts/WenKai-subset.woff2   目前使用的子集字體（建置時產生）
 ├── SPEC.md                     規格書
+├── SOURCES.md                  註解來源、版本與校勘
+├── TODO.md                     待使用者決定、待實機確認的事項
 └── AGENTS.md                   本檔
 ```
 
@@ -41,14 +50,20 @@ xinjing/
 
 `build.py` 找不到完整字體時，會改用現有子集並**列出缺字**。看到缺字警告就代表必須取得完整字體重建，不可忽略。
 
-匯出圖片落款用到、但不一定出現在 HTML 原文的字，放在 `build.py` 的 `EXTRA` 常數。
+匯出圖片落款用到、但不一定出現在 HTML 原文的字，放在 `build.py` 的 `EXTRA` 常數。註解、序、白話會先內嵌再子集化，不必另外列。
+
+### 註解、白話的規則
+
+- `data/notes.json` 由 `tools/fetch_notes.py` 產生，**不手改**。錄入錯字或句讀修正寫成 `data/corrections.json` 的一條，**必須先經使用者同意**；候選放 `data/corrections.proposed.json`。
+- 白話（`data/plain.json`）是 Claude 依註解意譯，可依使用者意見修改；頁面固定標示未經專家審訂。
+- 改了註解、`SAY` 或 `SAY_NOTE`，都要重新執行 `tools/tts_edge.py`（只重做有變的項目），否則 `build.py` 會停止。白話不預錄（使用者決定），預錄模式下用手機語音念，改白話不必重錄。
 
 ## 必須遵守的規則
 
 ### 不可違反
 
 - **單一檔案、零外部資源**：不可引用 CDN、外部圖片、外部字體或任何網路請求。Artifact 的內容安全政策會直接擋掉，而且是無聲失敗。
-- **不可修改顯示用的經文**來修正讀音。讀音問題只改 `SAY` 校正表（見 `SPEC.md` 3.3）。
+- **不可修改顯示用的經文**來修正讀音。讀音問題只改 `SAY` 校正表；只影響註解、白話的改 `SAY_NOTE`（見 `SPEC.md` 3.3）。`tools/textdata.py` 會從範本讀出這兩張表，規則要維持 `[/原文/g,"替代"]` 的寫法。
 - **經文版本固定為玄奘譯本**。若使用者要求改字（例如「薩婆訶」改「娑婆訶」），描寫序列總數與既有描寫紀錄的字序對應都可能受影響，須先向使用者說明。
 - **儲存格式向後相容**：`xj.*` 這幾個 localStorage 鍵與筆畫格式裡有使用者的描寫紀錄。變更結構時必須寫遷移程式，不可讓舊資料失效。
 - **夜間配色兩處同步**：深色變數同時存在 `@media (prefers-color-scheme: dark)` 區塊與 `:root[data-theme="dark"]` 區塊，改一處就要改另一處。
@@ -71,7 +86,7 @@ Android Chrome 的 `speechSynthesis` 有幾個已知問題，現行設計就是�
 - `cancel()` 之後舊的 `onend` 仍可能觸發 → 所以用遞增的 `token` 判斷回呼是否過期。
 - 語音清單是非同步載入 → 所以監聽 `voiceschanged` 重新挑選。
 
-預錄朗讀的音檔由 `tools/tts_edge.py`（edge-tts，不需金鑰）產生。改了經文或 `SAY` 就要重新產生錄音再建置。edge-tts 是非公開介面，若出現 403 先升級套件版本；不要用偽造標頭等方式繞過封鎖。
+預錄朗讀的音檔由 `tools/tts_edge.py`（edge-tts，不需金鑰，需要 ffmpeg）產生。改了經文、註解、`SAY` 或 `SAY_NOTE` 就要重新產生錄音再建置。朗讀文字的轉換在範本（`spoken`、`spokenNote`、`spokenPlain`）與 `tools/textdata.py` 各有一份，兩邊要一致。edge-tts 是非公開介面，若出現 403 先升級套件版本；不要用偽造標頭等方式繞過封鎖。
 
 以上只針對「手機語音」引擎。「Claude 語音」引擎（`tts` 能力）可以整句送出、用平台的 `pause()`／`resume()`；它回報 `not_granted` 時不可自動改用手機語音朗讀（會違反使用者關掉朗讀的選擇）。
 
