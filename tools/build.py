@@ -91,8 +91,8 @@ html = html.replace("__ICON_B64__", base64.b64encode(open(ICON, "rb").read()).de
 # 預錄朗讀：audio/manifest.json 存在時，把各項音檔以 base64 內嵌（由 tools/tts_edge.py 產生）
 AUDIO = os.path.join(ROOT, "audio")
 MANIFEST = os.path.join(AUDIO, "manifest.json")
-if "/*__AUDIO__*/null" not in html:
-    sys.exit("範本缺少 /*__AUDIO__*/null 預留位置")
+if "/*__AUDIO__*/null" not in html or "<!--__AUDIO_DATA__-->" not in html:
+    sys.exit("範本缺少 /*__AUDIO__*/null 或 <!--__AUDIO_DATA__--> 預留位置")
 if NO_AUDIO:
     print("--no-audio：略過預錄朗讀")
 elif os.path.exists(MANIFEST):
@@ -104,7 +104,6 @@ elif os.path.exists(MANIFEST):
     def frames_ok(b):
         return len(b) % FRAME == 0 and all(b[i] == 0xFF and b[i + 1] & 0xE0 == 0xE0 for i in range(0, len(b), FRAME))
     have = {it["id"]: it for it in man.get("items", [])}
-    mimes = {".mp3": "audio/mpeg", ".webm": "audio/webm", ".ogg": "audio/ogg", ".wav": "audio/wav"}
     items, bad = [], []
     for iid, kind, text in textdata.items(D):
         if kind not in man["voices"]:  # manifest 沒有這類的聲音：不預錄，網頁改用手機語音
@@ -117,21 +116,25 @@ elif os.path.exists(MANIFEST):
         b = open(p, "rb").read()
         if not frames_ok(b):
             sys.exit(f"{it['file']} 不是固定 {FRAME} 位元組的 MP3 幀，請執行 python tools/tts_edge.py --force")
-        items.append({"id": iid, "type": mimes.get(os.path.splitext(p)[1], "audio/mpeg"),
-                      "b64": base64.b64encode(b).decode()})
+        items.append({"id": iid, "b64": base64.b64encode(b).decode()})
     if bad:
         sys.exit(f"錄音缺少或與目前文字不一致（{len(bad)} 項，例如 {', '.join(bad[:5])}），"
                  "請執行 python tools/tts_edge.py；或加 --no-audio 略過預錄")
     sb = open(os.path.join(AUDIO, man["silence"]), "rb").read()
     if not frames_ok(sb) or len(sb) < FRAME * 30:
         sys.exit("silence.mp3 格式不對，請執行 python tools/tts_edge.py")
+    # 主程式裡只放說明資料；錄音本身（約 6.7 MB）放在主程式後面的 JSON 區塊，
+    # 不會自動執行，畫面可以先顯示，錄音在背景繼續下載（見範本 recLoaded）
     rec = {"voice": man["voices"]["j"], "voices": man["voices"], "frame": FRAME, "fdur": 0.024,
-           "sil": base64.b64encode(sb[FRAME * 20:FRAME * 21]).decode(), "items": items}
+           "sil": base64.b64encode(sb[FRAME * 20:FRAME * 21]).decode(), "ids": [i["id"] for i in items]}
     html = html.replace("/*__AUDIO__*/null", json.dumps(rec, ensure_ascii=False, separators=(",", ":")))
+    data = json.dumps({i["id"]: i["b64"] for i in items}, separators=(",", ":"))
+    html = html.replace("<!--__AUDIO_DATA__-->", '<script type="application/json" id="recData">' + data + "</script>")
     size = sum(len(i["b64"]) for i in items)
     print(f"已內嵌預錄朗讀 {len(items)} 項（base64 {size//1024} KB）")
 else:
     print("沒有 audio/manifest.json，略過預錄朗讀")
+html = html.replace("<!--__AUDIO_DATA__-->", "")
 
 open(OUT, "w", encoding="utf-8").write(html)
 print(f"完成：{OUT}（{os.path.getsize(OUT)//1024} KB）")

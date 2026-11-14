@@ -565,19 +565,25 @@ $("prefBtn").onclick=function(){go("preface");};
 var RATES=[0.6,0.7,0.8,1,1.2];
 var state="idle",token=0,voice=null,eng=null,claudeTts=null,claudeOff=false,dvoices=[];
 var Q=[],qi=0,sub=0,qFrom=null,q0=0,qOnly=null;
-// 預錄朗讀：build.py 由 audio/ 內嵌 {voice, voices:{j,p,n}, frame, fdur, sil, items:[{id, type, b64}]}；沒有音檔時為 null
+// 預錄朗讀：build.py 由 audio/ 內嵌說明 {voice, voices:{j,p,n}, frame, fdur, sil, ids}；沒有音檔時為 null。
+// 錄音本身放在主程式後面、id 為 recData 的 JSON 區塊（{id: base64}），
+// 畫面先顯示、錄音在背景下載；整份 HTML 讀完（recLoaded）才能用預錄朗讀，第一次用到時才解析。
 // 沒有錄音的項目（例如舊的 manifest 沒錄白話）在預錄模式下略過
 var REC=/*__AUDIO__*/null;
 var VOICE_NAMES={"zh-TW-HsiaoYuNeural":"曉雨","zh-TW-HsiaoChenNeural":"曉臻","zh-TW-YunJheNeural":"雲哲"};
 var recMap=null,recBin={},audio=null,recPos=0,recTL=[],recCur=-1,recBlobUrl=null,silFrame=null;
-function recReady(){return !!(REC&&REC.items&&REC.items.length);}
+var recLoaded=document.readyState!=="loading",recWaiting=null;
+function recReady(){return !!(REC&&REC.ids&&REC.ids.length);}
 function recHasPlain(){return !!(REC&&REC.voices&&REC.voices.p);}
 function recName(k){var v=REC&&(REC.voices&&REC.voices[k||"j"]||REC.voice);return (v&&VOICE_NAMES[v])||"";}
 function b64u8(b64){var bin=atob(b64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);return u8;}
 function recBytes(id){
-  if(!recMap){recMap={};REC.items.forEach(function(it){recMap[it.id]=it;});}
-  var it=recMap[id];if(!it)return null;
-  return recBin[id]||(recBin[id]=b64u8(it.b64));
+  if(!recMap){
+    recMap={};
+    try{var el=document.getElementById("recData");if(el)recMap=JSON.parse(el.textContent);}catch(e){}
+  }
+  var b64=recMap[id];if(!b64)return null;
+  return recBin[id]||(recBin[id]=b64u8(b64));
 }
 // 錄音以 0.8 為原速；語速設定換算成播放速度（Chrome 預設保持音高）
 function recRate(){return S.rate/0.8;}
@@ -800,7 +806,7 @@ function engineNow(){
   return hasNative?"native":null;
 }
 function setUI(){
-  var lbl=state==="playing"?"暫停":(state==="paused"?"繼續":null);
+  var lbl=state==="playing"?"暫停":(state==="paused"?"繼續":(recWaiting?"載入中…":null));
   $("play").textContent=lbl||"朗讀";
   $("nPlay").textContent=lbl||"朗讀註解";
   $("pPlay").textContent=lbl||"朗讀白話";
@@ -814,6 +820,11 @@ function finish(){state="idle";Q=[];qi=0;sub=0;qFrom=null;clearMarks();setTemp("
 function play(only,startId,from,custom){
   var e=engineNow();
   if(!e){noSpeech();return;}
+  // 錄音還在下載：記下要念什麼，整份 HTML 讀完後自動開始
+  if(e==="rec"&&!recLoaded){
+    if(!recWaiting)toast("錄音還在下載，下載完會自動開始",4000);
+    recWaiting=[only,startId,from,custom];setUI();return;
+  }
   if(state!=="idle")halt();
   eng=e;token++;var my=token;
   if(!only&&!custom){
@@ -854,7 +865,7 @@ function resume(){
   else if(eng==="rec")recItem(token,recPos);
   else claudeRun(token);
 }
-function stopAll(){halt();finish();}
+function stopAll(){recWaiting=null;halt();finish();}
 function noSpeech(){
   setUI();
   if(claudeOff)toast("這個頁面的 Claude 語音朗讀已關閉。如要改用手機語音，請到設定的「朗讀聲音」選擇",5000);
@@ -1220,6 +1231,10 @@ window.addEventListener("hashchange",function(){show(location.hash.slice(1));});
 })();
 
 /* ---------- 啟動 ---------- */
+if(!recLoaded)document.addEventListener("DOMContentLoaded",function(){
+  recLoaded=true;
+  if(recWaiting){var w=recWaiting;recWaiting=null;setUI();play(w[0],w[1],w[2],w[3]);}
+});
 buildRead();buildPreface();applyReadUI();applyFs();applyLayout();setUI();renderVoiceUI();
 $("penRange").value=S.pen;$("penOut").textContent=S.pen;
 if(typeof ResizeObserver!=="undefined")new ResizeObserver(function(){if($("view-trace").classList.contains("on"))layoutCell();}).observe($("stage"));
@@ -1236,5 +1251,6 @@ idbGet("userFont").then(function(rec){
 }).then(function(){applyFont();});
 })();
 </script>
+<!--__AUDIO_DATA__-->
 </body>
 </html>
