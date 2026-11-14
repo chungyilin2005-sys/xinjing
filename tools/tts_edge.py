@@ -3,16 +3,19 @@
 供 build.py 內嵌成「預錄朗讀」。不需要金鑰。
 
 用法（在專案根目錄執行）：
-    pip install edge-tts           # 註解轉成 24 kbps mp3 需要 ffmpeg
+    pip install edge-tts           # 轉成統一格式需要 ffmpeg
     python tools/tts_edge.py       # 只重做文字或設定有變的項目
     其他選項：
         --force                    全部重做
         --only j:3                 只重做指定項目（可重複指定；j:段、p:段、n:段:句）
 
 聲音：
-    經文 zh-TW-HsiaoYuNeural 曉雨，mp3 48 kbps（edge-tts 原檔）
-    白話 zh-TW-HsiaoChenNeural 曉臻，mp3 24 kbps（使用者 2026-11-14 決定預錄白話、選曉臻）
-    註解 zh-TW-HsiaoChenNeural 曉臻，mp3 24 kbps
+    經文 zh-TW-HsiaoYuNeural 曉雨
+    白話 zh-TW-HsiaoChenNeural 曉臻（使用者 2026-11-14 決定預錄白話、選曉臻）
+    註解 zh-TW-HsiaoChenNeural 曉臻
+格式（FORMAT）：全部轉成 24 kHz 單聲道 40 kbps 固定位元率 MP3，不寫 Xing／ID3 標頭、不用位元庫（reservoir），
+每一幀固定 120 位元組、24 ms，彼此獨立。網頁把整串要念的項目與停頓（重複的無聲幀）直接接成一個音檔播放，
+中途不換音檔，Android Chrome 關螢幕後才能一直念下去。另產生 silence.mp3（1 秒無聲）供 build.py 取一幀。
 語速一律 -10%（網頁以 0.8 為原速）。
 manifest 每項記下聲音；換聲音時只重做該類。
 
@@ -32,7 +35,9 @@ OUTDIR = os.path.join(ROOT, "audio")
 MANIFEST = os.path.join(OUTDIR, "manifest.json")
 VOICES = {"j": "zh-TW-HsiaoYuNeural", "p": "zh-TW-HsiaoChenNeural", "n": "zh-TW-HsiaoChenNeural"}
 RATE, PITCH = "-10%", "+0Hz"
-FFMPEG_24K = ["-ac", "1", "-ar", "22050", "-b:a", "24k"]
+FORMAT = "mp3 24000Hz mono 40k cbr noreservoir noxing"
+FFMPEG_FMT = ["-ac", "1", "-ar", "24000", "-c:a", "libmp3lame", "-b:a", "40k", "-reservoir", "0",
+              "-write_xing", "0", "-id3v2_version", "0", "-map_metadata", "-1"]
 
 
 async def synth(text, path, voice):
@@ -64,12 +69,16 @@ async def main():
     except ImportError:
         sys.exit("請先安裝：pip install edge-tts")
     if not shutil.which("ffmpeg"):
-        sys.exit("需要 ffmpeg（註解轉成 24 kbps）")
+        sys.exit("需要 ffmpeg（轉成統一格式）")
+    sil = os.path.join(OUTDIR, "silence.mp3")
+    os.makedirs(OUTDIR, exist_ok=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono", "-t", "1"]
+                   + FFMPEG_FMT + [sil], check=True)
 
     old = {}
     if os.path.exists(MANIFEST):
         m = json.load(open(MANIFEST, encoding="utf-8"))
-        if m.get("rate") == RATE:
+        if m.get("rate") == RATE and m.get("format") == FORMAT:
             # 項目沒有記聲音時（舊版 manifest），以 manifest 的 voices 判斷；聲音相同才沿用
             mv = m.get("voices", {})
             old = {it["id"]: it for it in m.get("items", [])
@@ -91,7 +100,8 @@ async def main():
     def save():
         # 每做完一項就寫一次 manifest，中途失敗時下次可以接著做
         items = [it for it, _, _ in todo if it["id"] in ok]
-        manifest = {"voices": VOICES, "rate": RATE, "pitch": PITCH, "source": "edge-tts", "items": items}
+        manifest = {"voices": VOICES, "rate": RATE, "pitch": PITCH, "format": FORMAT, "source": "edge-tts",
+                    "silence": "silence.mp3", "items": items}
         with open(MANIFEST, "w", encoding="utf-8") as fp:
             json.dump(manifest, fp, ensure_ascii=False, indent=1)
         return items
@@ -101,15 +111,11 @@ async def main():
         if not redo:
             continue
         path = os.path.join(OUTDIR, it["file"])
-        if kind == "j":
-            if not await synth(it["text"], path, VOICES[kind]):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = os.path.join(td, "a.mp3")
+            if not await synth(it["text"], tmp, VOICES[kind]):
                 continue
-        else:
-            with tempfile.TemporaryDirectory() as td:
-                tmp = os.path.join(td, "a.mp3")
-                if not await synth(it["text"], tmp, VOICES[kind]):
-                    continue
-                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", tmp] + FFMPEG_24K + [path], check=True)
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", tmp] + FFMPEG_FMT + [path], check=True)
         made += 1
         if it["id"] not in ok:
             ok.append(it["id"])

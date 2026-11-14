@@ -565,23 +565,19 @@ $("prefBtn").onclick=function(){go("preface");};
 var RATES=[0.6,0.7,0.8,1,1.2];
 var state="idle",token=0,voice=null,eng=null,claudeTts=null,claudeOff=false,dvoices=[];
 var Q=[],qi=0,sub=0,qFrom=null,q0=0,qOnly=null;
-// 預錄朗讀：build.py 由 audio/ 內嵌 {voice, voices:{j,n}, items:[{id, type, b64}]}；沒有音檔時為 null
-// 白話有錄音時（REC.voices.p）照常播放；沒有時預錄模式下改用手機語音念（recPlain）
+// 預錄朗讀：build.py 由 audio/ 內嵌 {voice, voices:{j,p,n}, frame, fdur, sil, items:[{id, type, b64}]}；沒有音檔時為 null
+// 沒有錄音的項目（例如舊的 manifest 沒錄白話）在預錄模式下略過
 var REC=/*__AUDIO__*/null;
 var VOICE_NAMES={"zh-TW-HsiaoYuNeural":"曉雨","zh-TW-HsiaoChenNeural":"曉臻","zh-TW-YunJheNeural":"雲哲"};
-var recMap=null,recUrl={},audio=null,recPos=0;
+var recMap=null,recBin={},audio=null,recPos=0,recTL=[],recCur=-1,recBlobUrl=null,silFrame=null;
 function recReady(){return !!(REC&&REC.items&&REC.items.length);}
 function recHasPlain(){return !!(REC&&REC.voices&&REC.voices.p);}
 function recName(k){var v=REC&&(REC.voices&&REC.voices[k||"j"]||REC.voice);return (v&&VOICE_NAMES[v])||"";}
-function recGet(id){
+function b64u8(b64){var bin=atob(b64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);return u8;}
+function recBytes(id){
   if(!recMap){recMap={};REC.items.forEach(function(it){recMap[it.id]=it;});}
   var it=recMap[id];if(!it)return null;
-  if(!recUrl[id]){
-    var bin=atob(it.b64),u8=new Uint8Array(bin.length);
-    for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
-    recUrl[id]=URL.createObjectURL(new Blob([u8],{type:it.type||"audio/mpeg"}));
-  }
-  return recUrl[id];
+  return recBin[id]||(recBin[id]=b64u8(it.b64));
 }
 // 錄音以 0.8 為原速；語速設定換算成播放速度（Chrome 預設保持音高）
 function recRate(){return S.rate/0.8;}
@@ -707,72 +703,61 @@ function nativeStep(my){
 }
 
 /* 預錄 */
-// 關螢幕後要繼續念：Android Chrome 只讓「一直在播放」的網頁在背景出聲。
-// 所以項目之間的停頓改播靜音（不用 setTimeout 空等），白話用手機語音念時也在底下循環播靜音，
-// 讓同一個 audio 元素從頭到尾不中斷。關螢幕時手機語音會停，預錄模式就略過白話。
-var plainSkipNoted=false,recGap=false,silUrl={};
-function canNativePlain(){return hasNative&&!!voice;}
-function silence(ms){
-  // 8 kHz、8 位元單聲道的無聲 WAV
-  ms=Math.max(100,Math.round(ms));
-  if(silUrl[ms])return silUrl[ms];
-  var n=Math.round(8000*ms/1000),b=new Uint8Array(44+n),dv=new DataView(b.buffer);
-  function str(o,s){for(var i=0;i<s.length;i++)b[o+i]=s.charCodeAt(i);}
-  str(0,"RIFF");dv.setUint32(4,36+n,true);str(8,"WAVEfmt ");dv.setUint32(16,16,true);
-  dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,8000,true);dv.setUint32(28,8000,true);
-  dv.setUint16(32,1,true);dv.setUint16(34,8,true);str(36,"data");dv.setUint32(40,n,true);
-  for(var i=44;i<b.length;i++)b[i]=128;
-  return (silUrl[ms]=URL.createObjectURL(new Blob([b],{type:"audio/wav"})));
+// 關螢幕後要繼續念：Android Chrome 在背景只讓網頁換一兩次音檔，之後新的音檔就不准播。
+// 所以從按「朗讀」（或「繼續」）起，把佇列裡剩下的每項錄音和項目間的停頓（重複的無聲幀）接成一個 MP3，
+// 用同一個 audio 元素從頭播到尾，中途不換音檔；標亮依播放時間（recTL）換算。
+// 每幀固定 REC.frame 位元組、REC.fdur 秒、彼此獨立（見 tts_edge.py 的 FORMAT），所以可以直接接、從任一幀切開。
+function silFrames(n){
+  if(!silFrame)silFrame=b64u8(REC.sil);
+  var F=REC.frame,b=new Uint8Array(n*F);for(var i=0;i<n;i++)b.set(silFrame,i*F);return b;
 }
-function recPlay(my,url,rate,pos,loop,onend){
-  if(!audio){audio=new Audio();audio.preload="auto";}
-  audio.onended=function(){if(my===token)onend();};
-  audio.loop=!!loop;
-  audio.src=url;
-  audio.defaultPlaybackRate=audio.playbackRate=rate;
-  if(pos)audio.currentTime=pos;
+// pos：從 Q[qi] 的第幾秒開始（暫停後繼續）
+function recItem(my,pos){
+  if(my!==token)return;
+  var F=REC.frame,D=REC.fdur,parts=[],tl=[],t=0;
+  for(var i=qi;i<Q.length;i++){
+    var b=recBytes(Q[i].id);if(!b)continue;
+    var off=0;
+    if(i===qi&&pos>0){var k=Math.min(b.length/F-1,Math.floor(pos/D));b=b.subarray(k*F);off=k*D;}
+    var d=b.length/F*D;tl.push({i:i,t0:t,t1:t+d,off:off});parts.push(b);t+=d;
+    var g=i<Q.length-1?gapAfter(Q[i],Q[i+1]):0;
+    if(g){var n=Math.round(g/1000/D);parts.push(silFrames(n));t+=n*D;}
+  }
+  if(!tl.length){finish();return;}
+  recTL=tl;recCur=-1;
+  if(recBlobUrl)URL.revokeObjectURL(recBlobUrl);
+  recBlobUrl=URL.createObjectURL(new Blob(parts,{type:"audio/mpeg"}));
+  if(!audio){audio=new Audio();audio.preload="auto";audio.ontimeupdate=recTick;}
+  audio.onended=function(){if(my===token){recTL=[];finish();}};
+  audio.src=recBlobUrl;
+  audio.defaultPlaybackRate=audio.playbackRate=recRate();
+  recTick();
   var pr=audio.play();
   if(pr&&pr.catch)pr.catch(function(e){
     if(my!==token||(e&&e.name==="AbortError"))return;
     finish();toast("無法播放預錄朗讀，請再按一次「朗讀」");
   });
 }
-// 念完一項：播一段靜音當停頓，再接下一項
-function recNext(my,it){
-  var gap=gapAfter(it,Q[qi+1]);qi++;sub=0;recPos=0;
-  if(qi>=Q.length||!gap){recGap=false;recItem(my,0);return;}
-  recGap=true;
-  recPlay(my,silence(gap),1,0,false,function(){recGap=false;recItem(my,0);});
+// 目前播到 recTL 的哪一段（停頓算在前一項）
+function recSeg(){
+  var t=audio?audio.currentTime:0;
+  for(var j=recTL.length-1;j>=0;j--)if(t>=recTL[j].t0-0.01)return recTL[j];
+  return recTL[0]||null;
 }
-function recItem(my,pos){
-  if(my!==token)return;
-  recGap=false;
-  if(qi>=Q.length){if(audio)audio.pause();finish();return;}
-  var it=Q[qi];
-  if(it.k==="p"&&!recHasPlain()){
-    if(canNativePlain()&&!document.hidden){recPlain(my);return;}
-    if(!document.hidden&&!plainSkipNoted){plainSkipNoted=true;toast("這支手機沒有中文語音，白話先略過",4000);}
-    qi++;sub=0;recItem(my,0);return;
+function recTick(){
+  if(eng!=="rec"||state!=="playing")return;
+  var sg=recSeg();if(!sg||sg.i===recCur)return;
+  recCur=sg.i;qi=sg.i;markItem(Q[qi],null);
+}
+// 暫停：記下項目與在該項的第幾秒；停在停頓裡就從下一項開頭繼續
+function recPause(){
+  var sg=recSeg();
+  if(sg){
+    var into=audio.currentTime-sg.t0;
+    if(into>=sg.t1-sg.t0){qi=sg.i+1;recPos=0;}else{qi=sg.i;recPos=into+sg.off;}
   }
-  var url=recGet(it.id);
-  if(!url){qi++;recItem(my,0);return;}
-  markItem(it,null);
-  recPlay(my,url,recRate(),pos,false,function(){recNext(my,it);});
+  audio.pause();
 }
-
-// 預錄模式下的白話：用手機語音（設定裡選的那個）逐句念，念完回到預錄
-function recPlain(my){
-  if(my!==token)return;
-  var it=Q[qi],parts=splitLong(itemText(it));
-  if(sub>=parts.length){recNext(my,it);return;}
-  if(sub===0)markItem(it);
-  if(!audio||!audio.loop||audio.paused)recPlay(my,silence(1000),1,0,true,function(){});
-  var u=utter(parts[sub],"j");
-  u.onend=function(){if(my!==token)return;sub++;setTimeout(function(){recPlain(my);},200);};
-  u.onerror=function(ev){if(my!==token)return;if(ev.error==="interrupted"||ev.error==="canceled")return;toast("朗讀中斷了，請再按一次「繼續」");state="paused";setUI();};
-  speechSynthesis.speak(u);
-}
-function recOnPlain(){return eng==="rec"&&!recHasPlain()&&Q[qi]&&Q[qi].k==="p";}
 
 /* Claude 語音：整串一次送出，白話、註解用不同聲線 */
 function cvoiceFor(k){
@@ -855,8 +840,8 @@ function halt(){
   else if(eng==="claude"&&claudeTts){claudeTts.stop().catch(function(){});}
 }
 function pause(){
-  if(eng==="native"||recOnPlain()){token++;speechSynthesis.cancel();if(eng==="rec"&&audio)audio.pause();}
-  else if(eng==="rec"){token++;recPos=(audio.ended||recGap)?0:audio.currentTime;recGap=false;audio.pause();}
+  if(eng==="native"){token++;speechSynthesis.cancel();}
+  else if(eng==="rec"){token++;recPause();}
   else if(eng==="claude"){claudeTts.pause().catch(function(){});}
   state="paused";setUI();
 }
@@ -878,12 +863,6 @@ function noSpeech(){
 function toggle(only){
   if(state==="playing")pause();else if(state==="paused")resume();else play(only);
 }
-// 預錄念白話時關掉螢幕：手機語音會停，改接下一項預錄（底下的靜音還在播，可以接得上）
-document.addEventListener("visibilitychange",function(){
-  if(!document.hidden||state!=="playing"||!recOnPlain())return;
-  token++;try{speechSynthesis.cancel();}catch(e){}
-  var my=token;qi++;sub=0;recPos=0;recItem(my,0);
-});
 // 鎖定畫面、通知列的播放控制（Media Session）；只在預錄時有作用，其他引擎不經過 audio 元素
 function syncMedia(){
   try{
@@ -908,8 +887,7 @@ $("stop").onclick=$("nStop").onclick=$("pStop").onclick=stopAll;
 $("rate").onclick=function(){
   var k=RATES.indexOf(S.rate);S.rate=RATES[(k+1)%RATES.length];saveS();setUI();
   if(state!=="playing")return;
-  if(recOnPlain()){token++;speechSynthesis.cancel();var mp=token;setTimeout(function(){recPlain(mp);},60);}
-  else if(eng==="rec")audio.defaultPlaybackRate=audio.playbackRate=recRate();
+  if(eng==="rec")audio.defaultPlaybackRate=audio.playbackRate=recRate();
   else if(eng==="native"){token++;speechSynthesis.cancel();var my=token;setTimeout(function(){nativeStep(my);},60);}
   else if(eng==="claude"&&claudeTts.setRate)claudeTts.setRate(Math.max(0.7,S.rate)).catch(function(){});
 };
@@ -941,8 +919,7 @@ function renderVoiceUI(){
   });
   document.querySelectorAll("#cvoiceSeg button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.cvoice===S.cvoice));});
   $("cvoiceSeg").hidden=(w!=="claude");
-  // 預錄模式下白話用手機語音，也讓使用者選手機語音
-  $("dvoiceSel").hidden=$("pitchRow").hidden=((w!=="device"&&!(w==="rec"&&hasPlain&&!recHasPlain()))||!dvoices.length);
+  $("dvoiceSel").hidden=$("pitchRow").hidden=(w!=="device"||!dvoices.length);
   var sel=$("dvoiceSel");sel.innerHTML="";
   dvoices.forEach(function(v){
     var o=document.createElement("option");o.value=v.voiceURI;
@@ -952,7 +929,7 @@ function renderVoiceUI(){
   $("pitchRange").value=S.pitch;$("pitchOut").textContent=S.pitch.toFixed(2);
   var note;
   if(w==="rec"){
-    note="預錄朗讀"+(recName()?"是微軟 Edge 語音事先合成好的錄音（經文「"+recName("j")+"」"+(hasPlain&&recName("p")?"、白話「"+recName("p")+"」":"")+(hasNotes&&recName("n")?"、註解「"+recName("n")+"」":"")+"）":"是事先合成好的錄音")+"，存在網頁裡，不需要網路。語速以播放速度調整。"+(hasPlain&&!recHasPlain()?"白話沒有錄音，用手機語音念"+(hasNative&&dvoices.length?"。":"，但這台裝置沒有中文語音，會略過白話。"):"");
+    note="預錄朗讀"+(recName()?"是微軟 Edge 語音事先合成好的錄音（經文「"+recName("j")+"」"+(hasPlain&&recName("p")?"、白話「"+recName("p")+"」":"")+(hasNotes&&recName("n")?"、註解「"+recName("n")+"」":"")+"）":"是事先合成好的錄音")+"，存在網頁裡，不需要網路。語速以播放速度調整。"+(hasPlain&&!recHasPlain()?"白話沒有錄音，預錄模式會略過白話。":"");
   }
   else if(w==="claude")note=claudeOff?"這個頁面的 Claude 語音朗讀已關閉（可在頁面的權限選單重新開啟），或改選手機語音。":"Claude 語音較自然，需要連上網路。念中文時，四種聲線可能聽起來相近。";
   else if(!hasNative)note="這個畫面沒有可用的語音。請在 Chrome 瀏覽器開啟這個網頁。";

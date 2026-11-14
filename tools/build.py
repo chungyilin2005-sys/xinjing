@@ -97,6 +97,12 @@ if NO_AUDIO:
     print("--no-audio：略過預錄朗讀")
 elif os.path.exists(MANIFEST):
     man = json.load(open(MANIFEST, encoding="utf-8"))
+    # 網頁把音檔逐幀接成一條連續音訊：每幀固定 FRAME 位元組、24 ms，不可有標頭（見 tts_edge.py 的 FORMAT）
+    FRAME = 120
+    if man.get("format") != "mp3 24000Hz mono 40k cbr noreservoir noxing":
+        sys.exit("錄音格式是舊版，請執行 python tools/tts_edge.py 重新產生；或加 --no-audio 略過預錄")
+    def frames_ok(b):
+        return len(b) % FRAME == 0 and all(b[i] == 0xFF and b[i + 1] & 0xE0 == 0xE0 for i in range(0, len(b), FRAME))
     have = {it["id"]: it for it in man.get("items", [])}
     mimes = {".mp3": "audio/mpeg", ".webm": "audio/webm", ".ogg": "audio/ogg", ".wav": "audio/wav"}
     items, bad = [], []
@@ -108,12 +114,19 @@ elif os.path.exists(MANIFEST):
         if not it or it.get("text") != text or it.get("voice") != man["voices"][kind] or not os.path.exists(p):
             bad.append(iid)
             continue
+        b = open(p, "rb").read()
+        if not frames_ok(b):
+            sys.exit(f"{it['file']} 不是固定 {FRAME} 位元組的 MP3 幀，請執行 python tools/tts_edge.py --force")
         items.append({"id": iid, "type": mimes.get(os.path.splitext(p)[1], "audio/mpeg"),
-                      "b64": base64.b64encode(open(p, "rb").read()).decode()})
+                      "b64": base64.b64encode(b).decode()})
     if bad:
         sys.exit(f"錄音缺少或與目前文字不一致（{len(bad)} 項，例如 {', '.join(bad[:5])}），"
                  "請執行 python tools/tts_edge.py；或加 --no-audio 略過預錄")
-    rec = {"voice": man["voices"]["j"], "voices": man["voices"], "items": items}
+    sb = open(os.path.join(AUDIO, man["silence"]), "rb").read()
+    if not frames_ok(sb) or len(sb) < FRAME * 30:
+        sys.exit("silence.mp3 格式不對，請執行 python tools/tts_edge.py")
+    rec = {"voice": man["voices"]["j"], "voices": man["voices"], "frame": FRAME, "fdur": 0.024,
+           "sil": base64.b64encode(sb[FRAME * 20:FRAME * 21]).decode(), "items": items}
     html = html.replace("/*__AUDIO__*/null", json.dumps(rec, ensure_ascii=False, separators=(",", ":")))
     size = sum(len(i["b64"]) for i in items)
     print(f"已內嵌預錄朗讀 {len(items)} 項（base64 {size//1024} KB）")
