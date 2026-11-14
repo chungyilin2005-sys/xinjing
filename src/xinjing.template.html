@@ -1066,15 +1066,16 @@ function endStroke(e){
 $("ink").addEventListener("pointerup",endStroke);
 $("ink").addEventListener("pointercancel",endStroke);
 
-function go(i){
+// 不可命名為 go：分頁切換的 go(v) 在同一函式範圍，同名會被後者覆蓋
+function goChar(i){
   idx=Math.max(0,Math.min(N-1,i));store("xj.idx",idx);
   document.fonts.load("40px "+fontStack(),CHARS[idx]).catch(function(){}).then(function(){redrawGuide();redrawInk();});
   updatePos();
 }
-$("prev").onclick=function(){go(idx-1);};
+$("prev").onclick=function(){goChar(idx-1);};
 $("next").onclick=function(){
   if(idx===N-1){var d=doneCount();toast(d===N?"全篇描寫圓滿":"已到最後一字，還有 "+(N-d)+" 字未描");openSheet();return;}
-  go(idx+1);
+  goChar(idx+1);
 };
 $("undo").onclick=function(){var s=strokes[idx];if(s&&s.length){s.pop();store("xj.s."+idx,s);redrawInk();updatePos();}};
 $("clear").onclick=function(){if(strokes[idx]&&strokes[idx].length){strokes[idx]=[];store("xj.s."+idx,[]);redrawInk();updatePos();}};
@@ -1100,7 +1101,7 @@ function renderGrid(){
     var has=strokes[i]&&strokes[i].length;
     drawChar(ctx,ch,px,has?"rgba(128,128,128,.12)":gu,0.78);
     if(has)paintStrokes(ctx,strokes[i],px,st);
-    b.appendChild(c);b.onclick=function(){closeSheet();go(i);};
+    b.appendChild(c);b.onclick=function(){closeSheet();goChar(i);};
     g.appendChild(b);
   });
   $("doneCount").textContent="已描 "+doneCount()+" ／ "+N;
