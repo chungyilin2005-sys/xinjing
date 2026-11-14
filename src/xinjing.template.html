@@ -706,28 +706,29 @@ function nativeStep(my){
 }
 
 /* 預錄 */
-var plainSkipNoted=false;
+// 關螢幕後要繼續念：Android Chrome 只讓「一直在播放」的網頁在背景出聲。
+// 所以項目之間的停頓改播靜音（不用 setTimeout 空等），白話用手機語音念時也在底下循環播靜音，
+// 讓同一個 audio 元素從頭到尾不中斷。關螢幕時手機語音會停，預錄模式就略過白話。
+var plainSkipNoted=false,recGap=false,silUrl={};
 function canNativePlain(){return hasNative&&!!voice;}
-function recItem(my,pos){
-  if(my!==token)return;
-  if(qi>=Q.length){finish();return;}
-  var it=Q[qi];
-  if(it.k==="p"){
-    if(canNativePlain()){recPlain(my);return;}
-    if(!plainSkipNoted){plainSkipNoted=true;toast("這支手機沒有中文語音，白話先略過",4000);}
-    qi++;sub=0;recItem(my,0);return;
-  }
-  var url=recGet(it.id);
-  if(!url){qi++;recItem(my,0);return;}
-  markItem(it,null);
+function silence(ms){
+  // 8 kHz、8 位元單聲道的無聲 WAV
+  ms=Math.max(100,Math.round(ms));
+  if(silUrl[ms])return silUrl[ms];
+  var n=Math.round(8000*ms/1000),b=new Uint8Array(44+n),dv=new DataView(b.buffer);
+  function str(o,s){for(var i=0;i<s.length;i++)b[o+i]=s.charCodeAt(i);}
+  str(0,"RIFF");dv.setUint32(4,36+n,true);str(8,"WAVEfmt ");dv.setUint32(16,16,true);
+  dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,8000,true);dv.setUint32(28,8000,true);
+  dv.setUint16(32,1,true);dv.setUint16(34,8,true);str(36,"data");dv.setUint32(40,n,true);
+  for(var i=44;i<b.length;i++)b[i]=128;
+  return (silUrl[ms]=URL.createObjectURL(new Blob([b],{type:"audio/wav"})));
+}
+function recPlay(my,url,rate,pos,loop,onend){
   if(!audio){audio=new Audio();audio.preload="auto";}
-  audio.onended=function(){
-    if(my!==token)return;
-    var gap=gapAfter(it,Q[qi+1]);qi++;recPos=0;
-    setTimeout(function(){recItem(my,0);},gap);
-  };
+  audio.onended=function(){if(my===token)onend();};
+  audio.loop=!!loop;
   audio.src=url;
-  audio.defaultPlaybackRate=audio.playbackRate=recRate();
+  audio.defaultPlaybackRate=audio.playbackRate=rate;
   if(pos)audio.currentTime=pos;
   var pr=audio.play();
   if(pr&&pr.catch)pr.catch(function(e){
@@ -735,16 +736,36 @@ function recItem(my,pos){
     finish();toast("無法播放預錄朗讀，請再按一次「朗讀」");
   });
 }
+// 念完一項：播一段靜音當停頓，再接下一項
+function recNext(my,it){
+  var gap=gapAfter(it,Q[qi+1]);qi++;sub=0;recPos=0;
+  if(qi>=Q.length||!gap){recGap=false;recItem(my,0);return;}
+  recGap=true;
+  recPlay(my,silence(gap),1,0,false,function(){recGap=false;recItem(my,0);});
+}
+function recItem(my,pos){
+  if(my!==token)return;
+  recGap=false;
+  if(qi>=Q.length){if(audio)audio.pause();finish();return;}
+  var it=Q[qi];
+  if(it.k==="p"){
+    if(canNativePlain()&&!document.hidden){recPlain(my);return;}
+    if(!document.hidden&&!plainSkipNoted){plainSkipNoted=true;toast("這支手機沒有中文語音，白話先略過",4000);}
+    qi++;sub=0;recItem(my,0);return;
+  }
+  var url=recGet(it.id);
+  if(!url){qi++;recItem(my,0);return;}
+  markItem(it,null);
+  recPlay(my,url,recRate(),pos,false,function(){recNext(my,it);});
+}
 
 // 預錄模式下的白話：用手機語音（設定裡選的那個）逐句念，念完回到預錄
 function recPlain(my){
   if(my!==token)return;
   var it=Q[qi],parts=splitLong(itemText(it));
-  if(sub>=parts.length){
-    var gap=gapAfter(it,Q[qi+1]);sub=0;qi++;recPos=0;
-    setTimeout(function(){recItem(my,0);},gap);return;
-  }
+  if(sub>=parts.length){recNext(my,it);return;}
   if(sub===0)markItem(it);
+  if(!audio||!audio.loop||audio.paused)recPlay(my,silence(1000),1,0,true,function(){});
   var u=utter(parts[sub],"j");
   u.onend=function(){if(my!==token)return;sub++;setTimeout(function(){recPlain(my);},200);};
   u.onerror=function(ev){if(my!==token)return;if(ev.error==="interrupted"||ev.error==="canceled")return;toast("朗讀中斷了，請再按一次「繼續」");state="paused";setUI();};
@@ -799,6 +820,7 @@ function setUI(){
   $("pPlay").textContent=lbl||"朗讀白話";
   $("stop").disabled=$("nStop").disabled=$("pStop").disabled=(state==="idle");
   $("rate").textContent="語速 "+(S.rate===1?"1.0":S.rate);
+  syncMedia();
 }
 function setTemp(tp,tn){if(tp!==temp.p||tn!==temp.n){temp.p=tp;temp.n=tn;buildRead();}}
 function finish(){state="idle";Q=[];qi=0;sub=0;qFrom=null;clearMarks();setTemp("","");setUI();}
@@ -832,8 +854,8 @@ function halt(){
   else if(eng==="claude"&&claudeTts){claudeTts.stop().catch(function(){});}
 }
 function pause(){
-  if(eng==="native"||recOnPlain()){token++;speechSynthesis.cancel();}
-  else if(eng==="rec"){token++;recPos=audio.ended?0:audio.currentTime;audio.pause();}
+  if(eng==="native"||recOnPlain()){token++;speechSynthesis.cancel();if(eng==="rec"&&audio)audio.pause();}
+  else if(eng==="rec"){token++;recPos=(audio.ended||recGap)?0:audio.currentTime;recGap=false;audio.pause();}
   else if(eng==="claude"){claudeTts.pause().catch(function(){});}
   state="paused";setUI();
 }
@@ -855,6 +877,29 @@ function noSpeech(){
 function toggle(only){
   if(state==="playing")pause();else if(state==="paused")resume();else play(only);
 }
+// 預錄念白話時關掉螢幕：手機語音會停，改接下一項預錄（底下的靜音還在播，可以接得上）
+document.addEventListener("visibilitychange",function(){
+  if(!document.hidden||state!=="playing"||!recOnPlain())return;
+  token++;try{speechSynthesis.cancel();}catch(e){}
+  var my=token;qi++;sub=0;recPos=0;recItem(my,0);
+});
+// 鎖定畫面、通知列的播放控制（Media Session）；只在預錄時有作用，其他引擎不經過 audio 元素
+function syncMedia(){
+  try{
+    if(!("mediaSession" in navigator))return;
+    var ms=navigator.mediaSession;
+    if(!ms.metadata&&window.MediaMetadata)ms.metadata=new MediaMetadata({title:"般若波羅蜜多心經",artist:"預錄朗讀",
+      artwork:[{src:$("appIcon").href,sizes:"512x512",type:"image/png"}]});
+    ms.playbackState=state==="playing"?"playing":(state==="paused"?"paused":"none");
+  }catch(e){}
+}
+(function(){
+  if(!("mediaSession" in navigator))return;
+  var h={play:function(){if(state==="paused")resume();else if(state==="idle")play(null);},
+         pause:function(){if(state==="playing")pause();},
+         stop:stopAll};
+  Object.keys(h).forEach(function(k){try{navigator.mediaSession.setActionHandler(k,h[k]);}catch(e){}});
+})();
 $("play").onclick=function(){toggle(null);};
 $("nPlay").onclick=function(){toggle("n");};
 $("pPlay").onclick=function(){toggle("p");};
