@@ -15,7 +15,7 @@ xinjing/
 ├── tools/build.py              建置腳本：內嵌註解等資料、子集化字體、內嵌字體與預錄音檔 → 寫出 index.html
 ├── tools/fetch_notes.py        下載維基文庫固定版本的註解，解析成 data/notes.json
 ├── tools/textdata.py           build.py 與 tts_edge.py 共用：套用修正、切小句、產生朗讀文字
-├── tools/tts_edge.py           用 edge-tts 逐項產生預錄朗讀音檔（經文、註解；白話不預錄）→ audio/
+├── tools/tts_edge.py           用 edge-tts 逐項產生預錄朗讀音檔（經文、白話、註解）→ audio/
 ├── data/notes.json             註解與序（fetch_notes.py 產生，勿手改）
 ├── data/raw/                   維基文庫原始碼與版本資訊
 ├── data/corrections.json       使用者確認過的註解修正
@@ -56,7 +56,7 @@ xinjing/
 
 - `data/notes.json` 由 `tools/fetch_notes.py` 產生，**不手改**。錄入錯字或句讀修正寫成 `data/corrections.json` 的一條，**必須先經使用者同意**；候選放 `data/corrections.proposed.json`。
 - 白話（`data/plain.json`）是 Claude 依註解意譯，可依使用者意見修改；頁面固定標示未經專家審訂。
-- 改了註解、`SAY` 或 `SAY_NOTE`，都要重新執行 `tools/tts_edge.py`（只重做有變的項目），否則 `build.py` 會停止。白話不預錄（使用者決定），預錄模式下用手機語音念，改白話不必重錄。
+- 改了註解、`SAY` 或 `SAY_NOTE`，都要重新執行 `tools/tts_edge.py`（只重做有變的項目），否則 `build.py` 會停止。白話也有預錄（曉臻，使用者 2026-11-14 決定），改了白話同樣要重新執行。
 
 ## 必須遵守的規則
 

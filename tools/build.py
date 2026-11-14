@@ -101,7 +101,7 @@ elif os.path.exists(MANIFEST):
     mimes = {".mp3": "audio/mpeg", ".webm": "audio/webm", ".ogg": "audio/ogg", ".wav": "audio/wav"}
     items, bad = [], []
     for iid, kind, text in textdata.items(D):
-        if kind not in man["voices"]:  # 白話不預錄，網頁改用手機語音
+        if kind not in man["voices"]:  # manifest 沒有這類的聲音：不預錄，網頁改用手機語音
             continue
         it = have.get(iid)
         p = it and os.path.join(AUDIO, it["file"])

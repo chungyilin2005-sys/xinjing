@@ -1,6 +1,7 @@
 {
  "voices": {
   "j": "zh-TW-HsiaoYuNeural",
+  "p": "zh-TW-HsiaoChenNeural",
   "n": "zh-TW-HsiaoChenNeural"
  },
  "rate": "-10%",
@@ -120,6 +121,120 @@
    "file": "j_18.mp3",
    "text": "揭諦揭諦，波羅揭諦，波羅僧揭諦，菩提薩婆訶。",
    "voice": "zh-TW-HsiaoYuNeural"
+  },
+  {
+   "id": "p:0",
+   "file": "p_0.mp3",
+   "text": "這是一部講以智慧，波惹，度到彼岸，波羅蜜多，的經。「心」是人人本來具有的波惹之心，「經」是不變的常法。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:1",
+   "file": "p_1.mp3",
+   "text": "觀自在菩薩修形甚深的實相波惹，以智慧觀照自心的時候。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:2",
+   "file": "p_2.mp3",
+   "text": "清楚看見色、受、想、形、識這五蘊本來都是空寂的，因此度脫了一切苦難。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:3",
+   "file": "p_3.mp3",
+   "text": "社利子啊。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:4",
+   "file": "p_4.mp3",
+   "text": "虛幻的形色和波惹的真空沒有差別，真空和形色也沒有差別；形色就是空，空就是形色，就像冰就是水、水就是冰。受、想、形、識也都是這樣。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:5",
+   "file": "p_5.mp3",
+   "text": "社利子啊，這一切法的本來面目就是真空實相：不生也不滅，不髒也不淨，不增加也不減少。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:6",
+   "file": "p_6.mp3",
+   "text": "所以在真空實相之中，沒有色，也沒有受、想、形、識；",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:7",
+   "file": "p_7.mp3",
+   "text": "沒有眼、耳、鼻、舌、身、意六根，也沒有色、聲、香、味、觸、法六塵；",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:8",
+   "file": "p_8.mp3",
+   "text": "從眼界一直到意識界，這十八界也都沒有；",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:9",
+   "file": "p_9.mp3",
+   "text": "十二因緣的生起與滅盡也都是空的：沒有無明，也沒有無明的滅盡；一直到沒有老死，也沒有老死的滅盡。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:10",
+   "file": "p_10.mp3",
+   "text": "也沒有苦、集、滅、道四諦；",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:11",
+   "file": "p_11.mp3",
+   "text": "沒有能觀照的智慧，也沒有所證得的東西。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:12",
+   "file": "p_12.mp3",
+   "text": "正因為無所得。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:13",
+   "file": "p_13.mp3",
+   "text": "菩薩依循波惹波羅蜜多修學，所以心中沒有業的束縛；沒有束縛，就沒有生死的恐怖；遠離顛倒的妄想，最後證得圓滿的涅槃。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:14",
+   "file": "p_14.mp3",
+   "text": "過去、現在、未來的一切諸佛，也都是依循波惹波羅蜜多，才證得無上正等正覺。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:15",
+   "file": "p_15.mp3",
+   "text": "所以要知道：波惹波羅蜜多是大神咒，能破魔障，是大明咒，能滅愚癡，是無上咒，能顯至理，是無等等咒，所證的妙覺沒有可以相比的。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:16",
+   "file": "p_16.mp3",
+   "text": "能除去一切苦，真實不虛。",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:17",
+   "file": "p_17.mp3",
+   "text": "所以宣說波惹波羅蜜多咒，咒語是：",
+   "voice": "zh-TW-HsiaoChenNeural"
+  },
+  {
+   "id": "p:18",
+   "file": "p_18.mp3",
+   "text": "咒語是佛的密語，依例保留原音，不作翻譯；誠心持誦，所願都能成就。",
+   "voice": "zh-TW-HsiaoChenNeural"
   },
   {
    "id": "n:0:0",

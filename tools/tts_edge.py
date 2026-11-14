@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""用 edge-tts（Edge 瀏覽器「大聲朗讀」的微軟語音）把經文、註解逐項合成成音檔，存到 audio/，
+"""用 edge-tts（Edge 瀏覽器「大聲朗讀」的微軟語音）把經文、白話、註解逐項合成成音檔，存到 audio/，
 供 build.py 內嵌成「預錄朗讀」。不需要金鑰。
 
 用法（在專案根目錄執行）：
@@ -7,12 +7,12 @@
     python tools/tts_edge.py       # 只重做文字或設定有變的項目
     其他選項：
         --force                    全部重做
-        --only j:3                 只重做指定項目（可重複指定；j:段、n:段:句）
+        --only j:3                 只重做指定項目（可重複指定；j:段、p:段、n:段:句）
 
-聲音（經文、註解用不同聲音，聽得出差別）：
+聲音：
     經文 zh-TW-HsiaoYuNeural 曉雨，mp3 48 kbps（edge-tts 原檔）
+    白話 zh-TW-HsiaoChenNeural 曉臻，mp3 24 kbps（使用者 2026-11-14 決定預錄白話、選曉臻）
     註解 zh-TW-HsiaoChenNeural 曉臻，mp3 24 kbps
-白話不預錄（使用者 2026-11-13 決定）：網頁在預錄模式下用手機語音念白話。
 語速一律 -10%（網頁以 0.8 為原速）。
 manifest 每項記下聲音；換聲音時只重做該類。
 
@@ -30,7 +30,7 @@ import textdata  # noqa: E402
 
 OUTDIR = os.path.join(ROOT, "audio")
 MANIFEST = os.path.join(OUTDIR, "manifest.json")
-VOICES = {"j": "zh-TW-HsiaoYuNeural", "n": "zh-TW-HsiaoChenNeural"}
+VOICES = {"j": "zh-TW-HsiaoYuNeural", "p": "zh-TW-HsiaoChenNeural", "n": "zh-TW-HsiaoChenNeural"}
 RATE, PITCH = "-10%", "+0Hz"
 FFMPEG_24K = ["-ac", "1", "-ar", "22050", "-b:a", "24k"]
 
@@ -77,7 +77,7 @@ async def main():
     os.makedirs(OUTDIR, exist_ok=True)
     todo, ok = [], []  # ok：檔案存在且文字相符，可寫進 manifest
     for iid, kind, text in textdata.items(textdata.load()):
-        if kind not in VOICES:  # 白話不預錄
+        if kind not in VOICES:
             continue
         f = fname(iid)
         path = os.path.join(OUTDIR, f)
@@ -119,7 +119,7 @@ async def main():
     # 清掉不再使用的舊音檔（只限本工具產生的 mp3：舊版的「數字開頭」與 j_／p_／n_）
     keep = {it["file"] for it, _, _ in todo}
     for f in os.listdir(OUTDIR):
-        if f.endswith(".mp3") and f not in keep and (f[:2].isdigit() or f[:2] in ("j_", "p_", "n_")):  # p_：舊的白話錄音
+        if f.endswith(".mp3") and f not in keep and (f[:2].isdigit() or f[:2] in ("j_", "p_", "n_")):
             os.remove(os.path.join(OUTDIR, f))
     if len(items) < len(todo):
         sys.exit(f"還有 {len(todo) - len(items)} 項沒有錄音（服務不穩），請再執行一次，只會補做缺的")
